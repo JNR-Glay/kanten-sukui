@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>寒天すくい</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background: #f4eee4; color:#332b25; display:flex; justify-content:center; align-items:center;
+  }
+  #game { width:min(96vw,900px); text-align:center; }
+  h1 { margin:8px 0 4px; font-size:28px; }
+  #info { display:flex; justify-content:space-between; max-width:760px; margin:0 auto 8px; font-weight:800; font-size:18px; }
+  #table {
+    position:relative; width:min(90vw,760px); aspect-ratio:1.55; margin:auto; background:#d8c19e;
+    border:12px solid #8c6542; border-radius:28px; overflow:hidden; touch-action:none;
+    box-shadow:inset 0 0 0 3px #b68e62,0 8px 20px #0002;
+  }
+  #plate {
+    position:absolute; left:5%; top:7%; width:90%; height:86%; border-radius:50%; overflow:hidden;
+    border:7px solid #ddd1c0;
+    background:
+      radial-gradient(circle at 25% 20%,#6e4328aa 0 2px,transparent 3px),
+      radial-gradient(circle at 70% 60%,#2f170d66 0 2px,transparent 3px),
+      linear-gradient(145deg,#5b321e,#3c1f12 55%,#2b150c);
+    box-shadow:inset 0 8px 18px #0008, inset 0 -4px 8px #fff2;
+  }
+  #plate::after { content:""; position:absolute; inset:8%; border-radius:50%; border:2px solid #9b6846aa; pointer-events:none; }
+  .item { position:absolute; transform:translate(-50%,-50%); user-select:none; pointer-events:none; z-index:3; }
+  .agar {
+    width:28px;height:24px;border-radius:7px;background:linear-gradient(135deg,#ffffffdd,#d8f4efaa);
+    border:2px solid #c7e7e0cc;box-shadow:inset 3px 3px 5px #fff9,1px 2px 3px #0006;
+  }
+  .bean {
+    width:25px;height:21px;border-radius:50%;background:linear-gradient(135deg,#4a352a,#160d09);
+    border:2px solid #100906;box-shadow:inset 4px 2px 4px #856b5b88,1px 2px 3px #0008;
+  }
+  .mochi {
+    width:25px;height:25px;border-radius:50%;border:2px solid #ffffff99;box-shadow:inset 3px 3px 5px #fff8,1px 2px 4px #0007;
+  }
+  .mochi.red { background:radial-gradient(circle at 30% 25%,#ffb0a8,#e64a4a 65%,#a51f28); }
+  .mochi.green { background:radial-gradient(circle at 30% 25%,#c8f3b0,#64b85b 65%,#28733a); }
+
+  /* 横向きスプーン */
+  #spoon { position:absolute;width:128px;height:48px;transform:translate(-50%,-50%);pointer-events:none;z-index:20;transition:left .04s linear,top .04s linear; }
+  #spoonHead {
+    position:absolute;left:0;top:50%;transform:translateY(-50%);width:48px;height:38px;border-radius:52% 48% 48% 52%;
+    background:linear-gradient(135deg,#f5f5f5,#aaa);border:2px solid #777;box-shadow:inset 5px 4px 8px #fff9,2px 3px 4px #0005;
+  }
+  #spoonHandle {
+    position:absolute;left:39px;top:50%;transform:translateY(-50%);width:89px;height:12px;border-radius:8px;
+    background:linear-gradient(90deg,#888,#eee 45%,#999);border:1px solid #777;box-shadow:1px 2px 3px #0004;
+  }
+  #spoon.scooping { animation:scoopMotion .34s ease-in-out; }
+  @keyframes scoopMotion {
+    0%{transform:translate(-50%,-50%) rotate(0deg)} 30%{transform:translate(-50%,-43%) rotate(-9deg)} 55%{transform:translate(-50%,-57%) rotate(7deg)} 100%{transform:translate(-50%,-50%) rotate(0deg)}
+  }
+  #table.stirring #plate { animation:stirPlate .45s ease-in-out 2; }
+  @keyframes stirPlate { 0%,100%{transform:rotate(0)}25%{transform:rotate(-1deg) scale(1.01)}75%{transform:rotate(1deg) scale(1.01)} }
+
+  #pourBag {
+    position:absolute;right:4%;top:2%;width:105px;height:88px;z-index:30;opacity:0;pointer-events:none;
+    transform:rotate(-18deg) translateY(-15px); transform-origin:80% 80%;
+  }
+  #pourBag .bag { width:72px;height:58px;margin:auto;background:linear-gradient(135deg,#fff2c9,#d9b36a);border:3px solid #8f6833;border-radius:7px 7px 12px 12px;box-shadow:2px 3px 5px #0004;position:relative; }
+  #pourBag .bag::before { content:"あんみつ"; position:absolute;left:8px;top:17px;font-weight:900;font-size:14px;color:#704321; }
+  #pourBag .bag::after { content:"";position:absolute;right:-16px;bottom:-8px;width:34px;height:13px;background:#d9b36a;border:3px solid #8f6833;border-left:0;transform:rotate(-12deg);border-radius:0 8px 8px 0; }
+  #pourBag .drop { position:absolute;width:8px;height:12px;border-radius:50%;background:#5a301c;left:46px;top:61px;opacity:0; }
+  #pourBag.pouring { animation:bagPour .8s ease-out; }
+  #pourBag.pouring .drop { animation:dropFall .55s .12s ease-in infinite; }
+  @keyframes bagPour { 0%{opacity:0;transform:rotate(-18deg) translateY(-15px)}20%{opacity:1}55%{opacity:1;transform:rotate(-32deg) translateY(2px)}100%{opacity:0;transform:rotate(-18deg) translateY(-15px)} }
+  @keyframes dropFall { 0%{opacity:0;transform:translate(0,0)}25%{opacity:1}100%{opacity:0;transform:translate(-12px,65px)} }
+
+  #controls { margin-top:12px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap; }
+  button { border:0;border-radius:14px;padding:14px 24px;font-size:18px;font-weight:800;cursor:pointer;background:#5b4030;color:white;box-shadow:0 4px 0 #38271e;touch-action:manipulation; }
+  button:active{transform:translateY(3px);box-shadow:0 1px 0 #38271e}
+  #scoopBtn{background:#47735b} #stirBtn{background:#9b633c}
+  #message{min-height:28px;margin-top:9px;font-weight:700}
+  #startOverlay{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:100}
+  .panel{background:#fffaf2;border-radius:22px;padding:24px;width:min(90vw,430px);box-shadow:0 12px 35px #0005}
+  .panel h2{margin:0 0 8px}
+  .panel p{line-height:1.7}
+  .scoreBox{display:flex;justify-content:center;gap:28px;margin:12px 0 18px;padding:12px;border-radius:15px;background:#efe2ce;font-size:18px;font-weight:900}
+  .scoreBox strong{font-size:26px}
+  .hint{font-size:13px;color:#6c5c4f;margin-top:12px}
+</style>
+</head>
+<body>
+<div id="game">
+  <h1>🥄 寒天すくい</h1>
+  <div id="info"><span>得点：<b id="score">0</b></span><span>自己ベスト：<b id="best">0</b></span><span>残り：<b id="time">60.0</b>秒</span></div>
+  <div id="table">
+    <div id="plate"></div>
+    <div id="pourBag"><div class="bag"></div><div class="drop"></div></div>
+    <div id="spoon"><div id="spoonHandle"></div><div id="spoonHead"></div></div>
+  </div>
+  <div id="controls"><button id="scoopBtn">🥄 すくう！</button><button id="stirBtn">🌀 かき混ぜる</button></div>
+  <div id="message">皿の中をドラッグしてスプーンを移動</div>
+</div>
+
+<div id="startOverlay"><div class="panel">
+  <h2 id="overlayTitle">寒天すくい</h2>
+  <div class="scoreBox"><span>得点<br><strong id="overlayScore">0</strong></span><span>自己ベスト<br><strong id="overlayBest">0</strong></span></div>
+  <p>スプーンを移動して寒天だけを狙おう。<br>「すくう！」でスプーンの範囲内を回収します。<br>寒天 <b>+1点</b>、黒豆 <b>-1点</b>。<br>30秒を切ると、おもちみたいな具が追加されます。<b>+2点</b>！</p>
+  <button id="startBtn">スタート！</button>
+  <div class="hint">かき混ぜると、具材がランダムに散らばります。</div>
+</div></div>
+
+<script>
+const plate=document.getElementById('plate'),table=document.getElementById('table'),spoon=document.getElementById('spoon');
+const scoopBtn=document.getElementById('scoopBtn'),stirBtn=document.getElementById('stirBtn'),startOverlay=document.getElementById('startOverlay'),startBtn=document.getElementById('startBtn');
+const scoreEl=document.getElementById('score'),bestEl=document.getElementById('best'),timeEl=document.getElementById('time'),message=document.getElementById('message');
+const overlayScore=document.getElementById('overlayScore'),overlayBest=document.getElementById('overlayBest'),overlayTitle=document.getElementById('overlayTitle'),pourBag=document.getElementById('pourBag');
+let items=[],score=0,running=false,endTime=0,timerId=null,spoonX=50,spoonY=50,dragging=false,round=0;
+let best=Number(localStorage.getItem('kantenBest')||0); bestEl.textContent=best; overlayBest.textContent=best;
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function positionItem(item){let x,y;do{x=8+Math.random()*84;y=8+Math.random()*84;}while(((x-50)/46)**2+((y-50)/43)**2>0.88);item.x=x;item.y=y;item.el.style.left=x+'%';item.el.style.top=y+'%';}
+function addItem(type,variant=''){
+  const el=document.createElement('div');el.className=`item ${type} ${variant}`;plate.appendChild(el);const item={type,el,x:0,y:0};positionItem(item);items.push(item);
+}
+function createRound(){
+  const agarCount=rand(10,15),beanCount=rand(5,8);
+  for(let i=0;i<agarCount;i++)addItem('agar'); for(let i=0;i<beanCount;i++)addItem('bean');
+  const elapsed=60-Math.max(0,(endTime-performance.now())/1000);
+  if(elapsed>=30){const mochiCount=rand(2,4);for(let i=0;i<mochiCount;i++)addItem('mochi',i%2?'green':'red');message.textContent=`第${round+1}回投入！ おもちも追加された！`;}else message.textContent=`第${round+1}回投入！ 寒天だけを狙え！`;
+  round++;pourBag.classList.remove('pouring');void pourBag.offsetWidth;pourBag.classList.add('pouring');
+}
+function setSpoon(clientX,clientY){const r=table.getBoundingClientRect();spoonX=Math.max(5,Math.min(95,((clientX-r.left)/r.width)*100));spoonY=Math.max(5,Math.min(95,((clientY-r.top)/r.height)*100));spoon.style.left=spoonX+'%';spoon.style.top=spoonY+'%';}
+function scoop(){
+  if(!running)return; spoon.classList.remove('scooping');void spoon.offsetWidth;spoon.classList.add('scooping');
+  const pr=plate.getBoundingClientRect(),sx=pr.left+pr.width*(spoonX/100),sy=pr.top+pr.height*(spoonY/100),radius=31;let collected=[],gained=0,beans=0,mochi=0;
+  for(const item of items){const ir=item.el.getBoundingClientRect(),ix=ir.left+ir.width/2,iy=ir.top+ir.height/2;if(Math.hypot(ix-sx,iy-sy)<radius){collected.push(item);if(item.type==='agar')gained++;else if(item.type==='bean')beans++;else if(item.type==='mochi')mochi++;}}
+  if(!collected.length){message.textContent='……何もすくえなかった！';return;}
+  for(const item of collected){item.el.remove();items.splice(items.indexOf(item),1);}
+  score+=gained-beans+mochi;scoreEl.textContent=score;overlayScore.textContent=score;
+  const parts=[];if(gained)parts.push(`寒天 +${gained}`);if(beans)parts.push(`黒豆 -${beans}`);if(mochi)parts.push(`おもち +${mochi*2}`);message.textContent=parts.join(' / ');
+  if(!items.some(i=>i.type==='agar'))createRound();
+}
+function stir(){if(!running)return;table.classList.remove('stirring');void table.offsetWidth;table.classList.add('stirring');for(const item of items)positionItem(item);message.textContent='ぐるぐる……具材が散らばった！';}
+function updateTime(){if(!running)return;const remaining=Math.max(0,(endTime-performance.now())/1000);timeEl.textContent=remaining.toFixed(1);if(remaining<=0)finish();else timerId=requestAnimationFrame(updateTime);}
+function clearItems(){for(const item of items)item.el.remove();items=[];}
+function startGame(){clearItems();score=0;round=0;scoreEl.textContent='0';overlayScore.textContent='0';timeEl.textContent='60.0';spoonX=50;spoonY=50;spoon.style.left='50%';spoon.style.top='50%';running=true;startOverlay.style.display='none';endTime=performance.now()+60000;createRound();timerId=requestAnimationFrame(updateTime);}
+function finish(){running=false;cancelAnimationFrame(timerId);timeEl.textContent='0.0';if(score>best){best=score;localStorage.setItem('kantenBest',best);}bestEl.textContent=best;overlayScore.textContent=score;overlayBest.textContent=best;overlayTitle.textContent='結果発表！';message.textContent=`終了！ 最終得点：${score}点`;startOverlay.style.display='flex';startBtn.textContent='もう一回！';}
+table.addEventListener('pointerdown',e=>{if(!running)return;dragging=true;table.setPointerCapture(e.pointerId);setSpoon(e.clientX,e.clientY);});
+table.addEventListener('pointermove',e=>{if(!running||!dragging)return;setSpoon(e.clientX,e.clientY);});table.addEventListener('pointerup',()=>dragging=false);table.addEventListener('pointercancel',()=>dragging=false);
+scoopBtn.addEventListener('click',scoop);stirBtn.addEventListener('click',stir);startBtn.addEventListener('click',startGame);
+</script>
+</body>
+</html>
